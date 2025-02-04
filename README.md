@@ -1,9 +1,7 @@
-Install the toolchain (GCC compiler, Python3, and chprog):
+Install the toolchain (GCC compiler, openocd):
 
-toolchain: 
+Toolchain for gcc and openocd: 
+http://mounriver.com/download
+Setup wch openocd
+https://nc-pin.com/index.php/2022/04/25/openocd-for-ch32v-series/
 
-https://static.dev.sifive.com/dev-tools/riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14.tar.gz
-```sh
-sudo apt install python3 python3-pip
-pip install chprog
-```

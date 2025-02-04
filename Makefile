@@ -36,28 +36,28 @@ OBJECTS		   += $(addprefix $(OBJECTS_DIR)/, $(SOURCES_ASM_:.S=.o))
 #|   -Os      | code size                        |              |   (--)  |            |    (++)     |
 #|  -Ofast    | O3 with none math cals           |     (---)    |         |     (+)    |    (+++)    |
 #|------------|----------------------------------|--------------|---------|------------|-------------|
-OPTIMIZE_OPTION = -Os
+# NOTE: For debugging, -g option is mandatory
+OPTIMIZE_OPTION = -Og -g
 
 # This folder is to copy binary to WSL share folder
 OBJECTS_SHARED_DIR = /mnt/c/Users/giahu/Documents/Binary_files
 
+GCC_PATH		= $(HOME)/tools/MRS_Toolchain_Linux_x64_V1.92.1/RISC-V_Embedded_GCC
+OPENOCD_PATH	= $(HOME)/tools/MRS_Toolchain_Linux_x64_V1.92.1/OpenOCD/bin/openocd
+TARGET_CFG_PATH 	= $(HOME)/tools/MRS_Toolchain_Linux_x64_V1.92.1/OpenOCD/bin/wch-riscv.cfg
 
-GCC_PATH		= $(HOME)/tools/riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14
-PROGRAMMER_PATH	= $(HOME)/tools/WCHISPTool_CMD/Linux/bin/x64/WCHISPTool_CMD
-
-PREFIX   	   	= riscv64-unknown-elf
 # The command for calling the compiler.
-CC 		= $(GCC_PATH)/bin/riscv64-unknown-elf-gcc
-CPP 		= $(GCC_PATH)/bin/riscv64-unknown-elf-g++   
-LD 		= $(GCC_PATH)/bin/riscv64-unknown-elf-ld
-STRIP 	= $(GCC_PATH)/bin/riscv64-unknown-elf-strip
-OBJCOPY 	= $(GCC_PATH)/bin/riscv64-unknown-elf-objcopy
-OBJDUMP 	= $(GCC_PATH)/bin/riscv64-unknown-elf-objdump
-OBJSIZE 	= $(GCC_PATH)/bin/riscv64-unknown-elf-size
-GDB		= $(GCC_PATH)/bin/riscv64-unknown-elf-gdb
+CC 		= $(GCC_PATH)/bin/riscv-none-embed-gcc
+CPP 		= $(GCC_PATH)/bin/riscv-none-embed-g++   
+LD 		= $(GCC_PATH)/bin/riscv-none-embed-ld
+STRIP 	= $(GCC_PATH)/bin/riscv-none-embed-strip
+OBJCOPY 	= $(GCC_PATH)/bin/riscv-none-embed-objcopy
+OBJDUMP 	= $(GCC_PATH)/bin/riscv-none-embed-objdump
+OBJSIZE 	= $(GCC_PATH)/bin/riscv-none-embed-size
+GDB		= $(GCC_PATH)/bin/riscv-none-embed-gdb
 
-LIBC		= 
-LIBM		= 
+LIBC		= $(GCC_PATH)/riscv-none-embed/lib/rv32imac/ilp32/libc.a
+LIBM		= $(GCC_PATH)/riscv-none-embed/lib/rv32imac/ilp32/libm.a
 
 
 # Set the compiler CPU/FPU options.
@@ -86,7 +86,6 @@ LDFLAGS += 	-lgcc \
 		-nostartfiles \
 		-Wl,-T,$(LDFILE),-Map,$(OBJECTS_DIR)/$(PROJECT).map,--print-memory-usage \
 		$(MARCH) $(MABI) \
-
 
 # all : $(SOURCES) $(LDFILE) $(SOURCES_ASM)
 # 	$(Print) $^ | tr ' ' '\n'
@@ -124,7 +123,7 @@ $(OBJECTS_DIR)/%.o: %.S
 
 
 
-.PHONY: clean
+.PHONY: clean debug com flash erase verify sdi_printf_on sdi_printf_off
 clean:
 	$(Print) "        __         *****************************"
 	$(Print) "      __\ \___     " CLEAN $(OBJECTS_DIR) folder
@@ -132,10 +131,20 @@ clean:
 	$(Print) "       \_\_\_\_\   *****************************"	
 	@rm -rf $(OBJECTS_DIR)
 
-.PHONY: com
+debug:
+	$(GDB) $(TARGET) target remote localhost:3333
+
 com:
 	minicom -D /dev/ttyUSB0 -b 9600 -c on 
 
-.PHONY: flash
+#chip_id  STRING : CH32V1x/CH32V2x/CH32V3x/CH56x/CH57x/CH58x/CH32V003/CH59x/CH643/CH32X035/CH32X034/CH32X033/CH32L10x/CH641/CH645/CH32V002/4/5/6/7/CH32M007/CH32V317/CH32M030/CH584/5
 flash:
-	chprog $(TARGET:.axf=.bin)
+	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c init -c halt -c "program $(OBJECTS_DIR)/$(NAME_MODULE).hex" -c reset -c exit
+erase:
+	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c init -c halt -c "flash erase_sector wch_riscv 0 last " -c reset -c exit
+verify:
+	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c init -c halt -c "verify_image $(OBJECTS_DIR)/$(NAME_MODULE).hex" -c exit
+sdi_printf_on:
+	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c "sdi_printf on"  
+sdi_printf_off:
+	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c "sdi_printf off"  

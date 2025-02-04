@@ -12,9 +12,6 @@ TARGET = $(OBJECTS_DIR)/$(NAME_MODULE).elf
 include sources/device/Makefile
 include sources/application/Makefile
 
-SHARED_DIR = ./platform/mik32v2-shared
-HAL_DIR = ./platform/mik32-hal
-
 SOURCES_ 		= $(notdir $(SOURCES))
 OBJECTS 		+= $(addprefix $(OBJECTS_DIR)/, $(SOURCES_:.c=.o))
 
@@ -41,24 +38,31 @@ OBJECTS		   += $(addprefix $(OBJECTS_DIR)/, $(SOURCES_ASM_:.S=.o))
 #|------------|----------------------------------|--------------|---------|------------|-------------|
 OPTIMIZE_OPTION = -Os
 
-COMPILER_PATH	   = /opt/riscv
+# This folder is to copy binary to WSL share folder
+OBJECTS_SHARED_DIR = /mnt/c/Users/giahu/Documents/Binary_files
 
-PROGRAMMER_PATH	   = /home/giahuy/tools/WCHISPTool_CMD/Linux/bin/x64/WCHISPTool_CMD
 
+GCC_PATH		= $(HOME)/tools/riscv64-unknown-elf-gcc-8.3.0-2020.04.0-x86_64-linux-ubuntu14
+PROGRAMMER_PATH	= $(HOME)/tools/WCHISPTool_CMD/Linux/bin/x64/WCHISPTool_CMD
+
+PREFIX   	   	= riscv64-unknown-elf
 # The command for calling the compiler.
-CC 		= $(COMPILER_PATH)/bin/riscv64-unknown-elf-gcc
-CPP 	= $(COMPILER_PATH)/bin/riscv64-unknown-elf-g++
-LD 		= $(COMPILER_PATH)/bin/riscv64-unknown-elf-ld
-STRIP 	= $(COMPILER_PATH)/bin/riscv64-unknown-elf-strip
-OBJCOPY = $(COMPILER_PATH)/bin/riscv64-unknown-elf-objcopy
-OBJDUMP = $(COMPILER_PATH)/bin/riscv64-unknown-elf-objdump
-OBJSIZE = $(COMPILER_PATH)/bin/riscv64-unknown-elf-size
+CC 		= $(GCC_PATH)/bin/riscv64-unknown-elf-gcc
+CPP 		= $(GCC_PATH)/bin/riscv64-unknown-elf-g++   
+LD 		= $(GCC_PATH)/bin/riscv64-unknown-elf-ld
+STRIP 	= $(GCC_PATH)/bin/riscv64-unknown-elf-strip
+OBJCOPY 	= $(GCC_PATH)/bin/riscv64-unknown-elf-objcopy
+OBJDUMP 	= $(GCC_PATH)/bin/riscv64-unknown-elf-objdump
+OBJSIZE 	= $(GCC_PATH)/bin/riscv64-unknown-elf-size
+GDB		= $(GCC_PATH)/bin/riscv64-unknown-elf-gdb
 
-LIBS += -lc -lm
+LIBC		= 
+LIBM		= 
+
 
 # Set the compiler CPU/FPU options.
-MARCH = -march=rv32imc_zicsr
-MABI = 	-mabi=ilp32
+MARCH = -march=rv32imac 
+MABI = -mabi=ilp32
 
 GENERAL_FLAGS += $(OPTIMIZE_OPTION)
 
@@ -78,13 +82,10 @@ CPPFLAGS +=					\
 
 # linker flags
 LDFLAGS += 	-lgcc \
-			-mcmodel=medlow \
-			-nostartfiles \
-			-ffreestanding \
-			-Wl,-Bstatic,-T,$(LDFILE),-Map,$(OBJECTS_DIR)/$(PROJECT).map,--print-memory-usage \
-			$(MARCH) $(MABI) \
-			-lnosys \
-			-lm \
+		-nodefaultlibs \
+		-nostartfiles \
+		-Wl,-T,$(LDFILE),-Map,$(OBJECTS_DIR)/$(PROJECT).map,--print-memory-usage \
+		$(MARCH) $(MABI) \
 
 
 # all : $(SOURCES) $(LDFILE) $(SOURCES_ASM)
@@ -100,11 +101,12 @@ create:
 
 $(TARGET): $(OBJECTS)
 	$(Print) LD $@
-	@$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS) $(LIBS)
+	@$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS) $(LIBC) $(LIBM)
 	$(Print) OBJCOPY $(@)
 	@$(OBJCOPY) -O binary $(@) $(@:.elf=.bin)
 	@$(OBJCOPY) -O ihex $(@) $(@:.elf=.hex)
 	@$(OBJDUMP) -S -d $(@) > $(@:.elf=.asm)
+	@cp $(@:.elf=.hex) $(OBJECTS_SHARED_DIR)
 	@$(OBJSIZE) $(TARGET)
 
 $(OBJECTS_DIR)/%.o: %.c

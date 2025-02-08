@@ -10,6 +10,8 @@ TARGET = $(OBJECTS_DIR)/$(NAME_MODULE).elf
 # Project files    #
 ##############################################################################
 include sources/device/Makefile
+#include sources/AK-mOS/Makefile
+include sources/platform/Makefile
 include sources/application/Makefile
 
 SOURCES_ 		= $(notdir $(SOURCES))
@@ -19,7 +21,7 @@ SOURCES_CPP_ 	= $(notdir $(SOURCES_CPP))
 OBJECTS 		+= $(addprefix $(OBJECTS_DIR)/, $(SOURCES_CPP_:.cpp=.o))
 
 SOURCES_ASM_ 	= $(notdir $(SOURCES_ASM))
-OBJECTS		   += $(addprefix $(OBJECTS_DIR)/, $(SOURCES_ASM_:.S=.o))
+OBJECTS		+= $(addprefix $(OBJECTS_DIR)/, $(SOURCES_ASM_:.S=.o))
 
 ##############################################################################
 
@@ -50,6 +52,7 @@ TARGET_CFG_PATH 	= $(HOME)/tools/MRS_Toolchain_Linux_x64_V1.92.1/OpenOCD/bin/wch
 CC 		= $(GCC_PATH)/bin/riscv-none-embed-gcc
 CPP 		= $(GCC_PATH)/bin/riscv-none-embed-g++   
 LD 		= $(GCC_PATH)/bin/riscv-none-embed-ld
+AS 		= $(GCC_PATH)/bin/riscv-none-embed-as
 STRIP 	= $(GCC_PATH)/bin/riscv-none-embed-strip
 OBJCOPY 	= $(GCC_PATH)/bin/riscv-none-embed-objcopy
 OBJDUMP 	= $(GCC_PATH)/bin/riscv-none-embed-objdump
@@ -96,7 +99,7 @@ create:
 	$(Print) "           )\     *****************************"
 	$(Print) "  c=======<||)    " CREATE $(OBJECTS_DIR) folder
 	$(Print) "           )(     *****************************"			
-	@mkdir -p $(OBJECTS_DIR) $(OBJECTS_DIR_C) $(OBJECTS_DIR_CPP) $(OBJECTS_DIR_ASM)
+	@mkdir -p $(OBJECTS_DIR)
 
 $(TARGET): $(OBJECTS)
 	$(Print) LD $@
@@ -119,7 +122,7 @@ $(OBJECTS_DIR)/%.o: %.cpp
 
 $(OBJECTS_DIR)/%.o: %.S
 	$(Print) AS $(notdir $@)
-	@$(CC) -c $(CFLAGS) -o $@ $< -D__ASSEMBLY__=1
+	@$(CC) -c $(CFLAGS) -o $@ $<
 
 
 
@@ -135,7 +138,7 @@ debug:
 	$(GDB) $(TARGET) target remote localhost:3333
 
 com:
-	minicom -D /dev/ttyUSB0 -b 9600 -c on 
+	minicom -D /dev/ttyACM0 -b 115200 -c on 
 
 #chip_id  STRING : CH32V1x/CH32V2x/CH32V3x/CH56x/CH57x/CH58x/CH32V003/CH59x/CH643/CH32X035/CH32X034/CH32X033/CH32L10x/CH641/CH645/CH32V002/4/5/6/7/CH32M007/CH32V317/CH32M030/CH584/5
 flash:

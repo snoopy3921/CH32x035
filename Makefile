@@ -4,21 +4,24 @@ NAME_MODULE = CH32x035_Sample
 PROJECT = $(NAME_MODULE)
 
 OBJECTS_DIR = build_$(NAME_MODULE)
+OBJECTS_DIR_ASM = build_asm_$(NAME_MODULE)
 TARGET = $(OBJECTS_DIR)/$(NAME_MODULE).elf
 
 ##############################################################################
 # Project files    #
 ##############################################################################
 include sources/device/Makefile
-#include sources/AK-mOS/Makefile
+include sources/AK-mOS/Makefile
 include sources/platform/Makefile
 include sources/application/Makefile
 
 SOURCES_ 		= $(notdir $(SOURCES))
 OBJECTS 		+= $(addprefix $(OBJECTS_DIR)/, $(SOURCES_:.c=.o))
+# OBJECTS_ASM		+= $(addprefix $(OBJECTS_DIR_ASM)/, $(SOURCES_:.c=.S))
 
 SOURCES_CPP_ 	= $(notdir $(SOURCES_CPP))
 OBJECTS 		+= $(addprefix $(OBJECTS_DIR)/, $(SOURCES_CPP_:.cpp=.o))
+# OBJECTS_ASM		+= $(addprefix $(OBJECTS_DIR_ASM)/, $(SOURCES_CPP_:.cpp=.S))
 
 SOURCES_ASM_ 	= $(notdir $(SOURCES_ASM))
 OBJECTS		+= $(addprefix $(OBJECTS_DIR)/, $(SOURCES_ASM_:.S=.o))
@@ -39,7 +42,7 @@ OBJECTS		+= $(addprefix $(OBJECTS_DIR)/, $(SOURCES_ASM_:.S=.o))
 #|  -Ofast    | O3 with none math cals           |     (---)    |         |     (+)    |    (+++)    |
 #|------------|----------------------------------|--------------|---------|------------|-------------|
 # NOTE: For debugging, -g option is mandatory
-OPTIMIZE_OPTION = -Og -g
+OPTIMIZE_OPTION = -O0 -g
 
 # This folder is to copy binary to WSL share folder
 OBJECTS_SHARED_DIR = /mnt/c/Users/giahu/Documents/Binary_files
@@ -69,7 +72,7 @@ MABI = -mabi=ilp32
 
 GENERAL_FLAGS += $(OPTIMIZE_OPTION)
 
-COMPILER_FLAGS += $(MARCH) $(MABI) -MD -fstrict-volatile-bitfields -fno-strict-aliasing -fno-common -fno-builtin-printf		
+COMPILER_FLAGS += $(MARCH) $(MABI) -MD #-fstrict-volatile-bitfields -fno-strict-aliasing -fno-common -fno-builtin-printf		
 
 # C compiler flags
 CFLAGS += $(GENERAL_FLAGS) $(COMPILER_FLAGS)
@@ -99,11 +102,11 @@ create:
 	$(Print) "           )\     *****************************"
 	$(Print) "  c=======<||)    " CREATE $(OBJECTS_DIR) folder
 	$(Print) "           )(     *****************************"			
-	@mkdir -p $(OBJECTS_DIR)
+	@mkdir -p $(OBJECTS_DIR) $(OBJECTS_DIR_ASM)
 
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJECTS) #$(OBJECTS_ASM)
 	$(Print) LD $@
-	@$(CC) -o $@ $^ $(LDFLAGS) $(CFLAGS) $(LIBC) $(LIBM)
+	@$(CC) -o $@ $(OBJECTS) $(LDFLAGS) $(CFLAGS) $(LIBC) $(LIBM)
 	$(Print) OBJCOPY $(@)
 	@$(OBJCOPY) -O binary $(@) $(@:.elf=.bin)
 	@$(OBJCOPY) -O ihex $(@) $(@:.elf=.hex)
@@ -114,7 +117,6 @@ $(TARGET): $(OBJECTS)
 $(OBJECTS_DIR)/%.o: %.c
 	$(Print) CC $(notdir $@)
 	@$(CC) -c $(CFLAGS) -o $@ $<
-	@$(CC) -S $(CFLAGS) -o $@.disasm $<
 
 $(OBJECTS_DIR)/%.o: %.cpp
 	$(Print) CXX $(notdir $@)
@@ -124,15 +126,22 @@ $(OBJECTS_DIR)/%.o: %.S
 	$(Print) AS $(notdir $@)
 	@$(CC) -c $(CFLAGS) -o $@ $<
 
+$(OBJECTS_DIR_ASM)/%.S: %.cpp
+	$(Print) AS $(notdir $@)
+	@$(CPP) -S -fverbose-asm $(CPPFLAGS) -o $@ $<
+
+$(OBJECTS_DIR_ASM)/%.S: %.c
+	$(Print) AS $(notdir $@)
+	@$(CC) -S $(CFLAGS) -o $@ $<
 
 
-.PHONY: clean debug com flash erase verify sdi_printf_on sdi_printf_off
+.PHONY: clean debug com flash erase verify sdi_printf_on sdi_printf_off reset
 clean:
 	$(Print) "        __         *****************************"
 	$(Print) "      __\ \___     " CLEAN $(OBJECTS_DIR) folder
 	$(Print) "      \ _ _ _ \    "	
 	$(Print) "       \_\_\_\_\   *****************************"	
-	@rm -rf $(OBJECTS_DIR)
+	@rm -rf $(OBJECTS_DIR) $(OBJECTS_DIR_ASM)
 
 debug:
 	$(GDB) $(TARGET) target remote localhost:3333
@@ -147,6 +156,8 @@ erase:
 	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c init -c halt -c "flash erase_sector wch_riscv 0 last " -c reset -c exit
 verify:
 	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c init -c halt -c "verify_image $(OBJECTS_DIR)/$(NAME_MODULE).hex" -c exit
+reset:
+	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c init -c reset -c exit
 sdi_printf_on:
 	$(OPENOCD_PATH) -f $(TARGET_CFG_PATH) -c "chip_id CH32X035" -c "sdi_printf on"  
 sdi_printf_off:

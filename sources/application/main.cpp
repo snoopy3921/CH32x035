@@ -1,3 +1,4 @@
+#include "main.h"
 #include "ch32x035_gpio.h"
 #include "ch32x035.h"
 #include "bsp_cfg.h"
@@ -16,7 +17,7 @@ void systick_init_test(uint32_t cpu_freq)
     /* Reset counter */
     SysTick->CNT = (uint32_t) 0;
     /* Set compare value */
-    SysTick->CMP = (uint32_t) ticks * 100;
+    SysTick->CMP = (uint32_t) ticks - 1;
     /* Software interrupt disable */
     SysTick->CTLR &= ~(1 << 31);
     /* Timer interrupt enable */
@@ -26,20 +27,43 @@ void systick_init_test(uint32_t cpu_freq)
 }
 
 
-#ifdef __cplusplus
-extern "C"
+// #ifdef __cplusplus
+// extern "C"
+// {
+// #endif	
+//     __attribute__((interrupt("WCH-Interrupt-fast")))
+//     void SysTick_Handler(void)
+// 	{
+//         GPIOB->OUTDR ^= (1 << 12);
+//         /* Clear counting flag status */
+//         SysTick->SR = 0;
+// 	};
+// #ifdef __cplusplus
+// }
+// #endif
+
+
+void task_1(void *p_arg)
 {
-#endif	
-    __attribute__((interrupt("WCH-Interrupt-fast")))
-    void SysTick_Handler(void)
-	{
-        GPIOB->OUTDR ^= (1 << 12);
-        /* Clear counting flag status */
-        SysTick->SR = 0;
-	};
-#ifdef __cplusplus
+    while (1)
+    {
+        BSP_PRINT("Task 1 \r\n");
+        //GPIOB->OUTDR ^= (1 << 12);
+        for(volatile int i = 0; i < 1000000; i++);
+    }
 }
-#endif
+void task_2(void *p_arg)
+{
+    while (1)
+    {
+        BSP_PRINT("Task 2 \r\n");
+        for(volatile int i = 0; i < 1000000; i++);
+    }   
+}
+void task_3(void *p_arg)
+{
+    
+}
 
 int main()
 {  
@@ -53,10 +77,15 @@ int main()
 
     bsp_console_init();
 
-    systick_init_test(SystemCoreClock);
-    NVIC_SetPriority(SysTick_IRQn, 1);
-    NVIC_EnableIRQ(SysTick_IRQn);
+    // ENABLE_INTERRUPTS
+    // systick_init_test(SystemCoreClock);
+    // NVIC_SetPriority(SysTick_IRQn, 1);
+    // NVIC_EnableIRQ(SysTick_IRQn);
 
+    BSP_PRINT("Hello \n");
+    os_init();
+	os_task_create_list((task_t*)app_task_table, TASK_EOT_ID);
+	os_run();
 
     while(1)
     {

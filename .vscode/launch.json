@@ -1,0 +1,42 @@
+{
+      // Use IntelliSense to learn about possible attributes.
+      // Hover to view descriptions of existing attributes.
+      // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+      "version": "0.2.0",
+      "configurations": [
+            {
+                  "name": "Cortex Debug",
+                  "cwd": "${workspaceFolder}",
+                  "executable": "/home/giahuy/workspace/GitHub/CH32x035/build_CH32x035_Sample/CH32x035_Sample.elf",
+                  "configFiles": [
+                        "/home/giahuy/tools/MRS_Toolchain_Linux_x64_V1.92.1/OpenOCD/bin/wch-riscv.cfg"
+                    ],
+                  "request": "launch",
+                  "type": "cortex-debug",
+                  "runToEntryPoint": "main",
+                  "gdbPath": "/home/giahuy/tools/MRS_Toolchain_Linux_x64_V1.92.1/RISC-V_Embedded_GCC12/bin/riscv-none-elf-gdb",
+                  "servertype": "openocd",
+                  "serverpath": "/home/giahuy/tools/MRS_Toolchain_Linux_x64_V1.92.1/OpenOCD/bin/openocd",
+                  "liveWatch": true,
+                  "showDevDebugOutput": true,
+            },
+            {
+                  "type": "venus",
+                  "request": "launch",
+                  "name": "Venus",
+                  "program": "/home/giahuy/workspace/GitHub/CH32x035/sources/application/main_asm.S",
+                  "stopOnEntry": true,
+                  "stopAtBreakpoints": true,
+                  "openViews": [
+                        "Assembly",
+                  //     "Robot",
+                  //     "LED Matrix",
+                  //     "Seven Segment Board"
+                  ],
+                  "ledMatrixSize": {
+                      "x": 10,
+                      "y": 10
+                  }
+            }
+      ]
+}

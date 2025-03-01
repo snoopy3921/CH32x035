@@ -48,21 +48,24 @@ void task_1(void *p_arg)
     while (1)
     {
         BSP_PRINT("Task 1 \r\n");
-        //GPIOB->OUTDR ^= (1 << 12);
-        for(volatile int i = 0; i < 1000000; i++);
+        os_task_delay(1000);
     }
 }
 void task_2(void *p_arg)
 {
     while (1)
     {
-        BSP_PRINT("Task 2 \r\n");
-        for(volatile int i = 0; i < 1000000; i++);
+        BSP_PRINT("\tTask 2 \r\n");
+        os_task_delay(600);
     }   
 }
 void task_3(void *p_arg)
 {
-    
+    while (1)
+    {
+        BSP_PRINT("\t\tTask 3 \r\n");
+        os_task_delay(200);
+    }   
 }
 
 int main()

@@ -7,5 +7,5 @@ const task_t app_task_table[] = {
     /*************************************************************************/
     {TASK_1_ID,   	    task_1,       NULL,   1,      8,                150},
     {TASK_2_ID,   	    task_2,       NULL,   1,      8,                150}, 
-    // {TASK_3_ID,   	    task_3,       NULL,   6,      8,                100}, 
+    {TASK_3_ID,   	    task_3,       NULL,   1,      8,                150}, 
 };

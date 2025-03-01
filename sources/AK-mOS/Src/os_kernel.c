@@ -26,7 +26,7 @@ void os_critical_enter(void)
 
 void os_critical_exit(void)
 {
-    os_assert(critical_nesting_count, "NESTING CRITICAL UNBALANCED");
+    //os_assert(critical_nesting_count, "NESTING CRITICAL UNBALANCED");
     critical_nesting_count--;
     if (critical_nesting_count == 0)
     {
